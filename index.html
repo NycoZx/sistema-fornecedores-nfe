@@ -115,6 +115,7 @@
       <div class="tab-pane fade" id="relatorio" role="tabpanel" aria-labelledby="relatorio-tab">
         <button class="btn btn-primary" onclick="exportarExcel()">Exportar Relatório NFe para Excel</button>
       </div>
+      
     </div>
   </div>
 
@@ -167,6 +168,7 @@
           <div class="modal-body">
             <input type="hidden" id="indiceNfeEditar" />
             <div class="mb-3">
+              <label for="dataNfeEditar"
               <label for="dataNfeEditar" class="form-label">Data da NFe</label>
               <input type="date" id="dataNfeEditar" class="form-control" required />
             </div>
@@ -190,240 +192,219 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Salvar</button>
+            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
+  <!-- Bootstrap JS e dependências -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // Dados locais simulando banco de dados
+    // Arrays para armazenar dados em memória
     let fornecedores = [];
     let nfeList = [];
 
-    // Referências ao DOM
-    const tabelaFornecedoresBody = document.querySelector("#tabelaFornecedores tbody");
-    const tabelaNfeBody = document.querySelector("#tabelaNfe tbody");
-    const fornecedorNfeSelect = document.getElementById("fornecedorNfe");
-    const fornecedorNfeEditarSelect = document.getElementById("fornecedorNfeEditar");
-
-    // Modal Bootstrap
+    // Referências para modal Bootstrap
     const editarFornecedorModal = new bootstrap.Modal(document.getElementById('editarFornecedorModal'));
     const editarNfeModal = new bootstrap.Modal(document.getElementById('editarNfeModal'));
 
-    // Função para atualizar a tabela fornecedores
+    // Função para atualizar a tabela de fornecedores
     function atualizarTabelaFornecedores() {
-      tabelaFornecedoresBody.innerHTML = "";
+      const tbody = document.querySelector('#tabelaFornecedores tbody');
+      tbody.innerHTML = '';
       fornecedores.forEach((f, i) => {
-        tabelaFornecedoresBody.innerHTML += `
-          <tr>
-            <td>${f.nome}</td>
-            <td>${f.contaCusto}</td>
-            <td>${f.grupoCusto}</td>
-            <td>${f.centroCusto}</td>
-            <td>
-              <button class="btn btn-sm btn-warning me-1" onclick="abrirModalEditarFornecedor(${i})" title="Editar">
-                <i class="bi bi-pencil-fill"></i>
-              </button>
-              <button class="btn btn-sm btn-danger" onclick="excluirFornecedor(${i})" title="Excluir">
-                <i class="bi bi-trash-fill"></i>
-              </button>
-            </td>
-          </tr>
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${f.nome}</td>
+          <td>${f.contaCusto}</td>
+          <td>${f.grupoCusto}</td>
+          <td>${f.centroCusto}</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-1" onclick="editarFornecedor(${i})"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-danger" onclick="excluirFornecedor(${i})"><i class="bi bi-trash"></i></button>
+          </td>
         `;
+        tbody.appendChild(tr);
       });
+
       atualizarSelectFornecedores();
     }
 
-    // Função para atualizar o select de fornecedores no formulário NFe
+    // Atualiza o select de fornecedores no formulário de NFe (cadastro e edição)
     function atualizarSelectFornecedores() {
-      const selects = [fornecedorNfeSelect, fornecedorNfeEditarSelect];
-      selects.forEach(select => {
-        const selecionado = select.value;
+      const selectCadastro = document.getElementById('fornecedorNfe');
+      const selectEditar = document.getElementById('fornecedorNfeEditar');
+      [selectCadastro, selectEditar].forEach(select => {
+        if (!select) return;
+        const valorAtual = select.value;
         select.innerHTML = '<option value="">Selecione</option>';
         fornecedores.forEach((f, i) => {
-          select.innerHTML += `<option value="${f.nome}">${f.nome}</option>`;
+          const option = document.createElement('option');
+          option.value = i;
+          option.textContent = f.nome;
+          select.appendChild(option);
         });
-        if (selecionado) select.value = selecionado;
+        if (valorAtual !== null) select.value = valorAtual;
       });
     }
 
     // Cadastrar fornecedor
     function cadastrarFornecedor(event) {
       event.preventDefault();
-      const nome = document.getElementById("nomeFornecedor").value.trim();
-      const contaCusto = document.getElementById("contaCusto").value.trim();
-      const grupoCusto = document.getElementById("grupoCusto").value.trim();
-      const centroCusto = document.getElementById("centroCusto").value.trim();
-
-      if (!nome || !contaCusto || !grupoCusto || !centroCusto) {
-        alert("Preencha todos os campos do fornecedor.");
-        return;
-      }
+      const nome = document.getElementById('nomeFornecedor').value.trim();
+      const contaCusto = document.getElementById('contaCusto').value.trim();
+      const grupoCusto = document.getElementById('grupoCusto').value.trim();
+      const centroCusto = document.getElementById('centroCusto').value.trim();
 
       fornecedores.push({ nome, contaCusto, grupoCusto, centroCusto });
       atualizarTabelaFornecedores();
+
       event.target.reset();
-      alert("Fornecedor cadastrado com sucesso!");
     }
 
-    // Abrir modal para editar fornecedor
-    function abrirModalEditarFornecedor(indice) {
+    // Editar fornecedor
+    function editarFornecedor(indice) {
       const f = fornecedores[indice];
-      document.getElementById("indiceFornecedorEditar").value = indice;
-      document.getElementById("nomeFornecedorEditar").value = f.nome;
-      document.getElementById("contaCustoEditar").value = f.contaCusto;
-      document.getElementById("grupoCustoEditar").value = f.grupoCusto;
-      document.getElementById("centroCustoEditar").value = f.centroCusto;
+      document.getElementById('indiceFornecedorEditar').value = indice;
+      document.getElementById('nomeFornecedorEditar').value = f.nome;
+      document.getElementById('contaCustoEditar').value = f.contaCusto;
+      document.getElementById('grupoCustoEditar').value = f.grupoCusto;
+      document.getElementById('centroCustoEditar').value = f.centroCusto;
       editarFornecedorModal.show();
     }
 
-    // Salvar edição fornecedor
+    // Salvar edição do fornecedor
     function salvarEdicaoFornecedor(event) {
       event.preventDefault();
-      const indice = document.getElementById("indiceFornecedorEditar").value;
-      const nome = document.getElementById("nomeFornecedorEditar").value.trim();
-      const contaCusto = document.getElementById("contaCustoEditar").value.trim();
-      const grupoCusto = document.getElementById("grupoCustoEditar").value.trim();
-      const centroCusto = document.getElementById("centroCustoEditar").value.trim();
-
-      if (!nome || !contaCusto || !grupoCusto || !centroCusto) {
-        alert("Preencha todos os campos do fornecedor.");
-        return;
-      }
-
-      fornecedores[indice] = { nome, contaCusto, grupoCusto, centroCusto };
+      const indice = parseInt(document.getElementById('indiceFornecedorEditar').value, 10);
+      fornecedores[indice] = {
+        nome: document.getElementById('nomeFornecedorEditar').value.trim(),
+        contaCusto: document.getElementById('contaCustoEditar').value.trim(),
+        grupoCusto: document.getElementById('grupoCustoEditar').value.trim(),
+        centroCusto: document.getElementById('centroCustoEditar').value.trim(),
+      };
       atualizarTabelaFornecedores();
       editarFornecedorModal.hide();
-      alert("Fornecedor atualizado com sucesso!");
     }
 
     // Excluir fornecedor
     function excluirFornecedor(indice) {
-      if (!confirm("Deseja realmente excluir este fornecedor?")) return;
-
-      // Verifica se existe NFe lançado para este fornecedor
-      const nomeFornecedor = fornecedores[indice].nome;
-      const temNfe = nfeList.some(nfe => nfe.fornecedor === nomeFornecedor);
-      if (temNfe) {
-        alert("Não é possível excluir fornecedor com NFe lançado.");
-        return;
-      }
+      if (!confirm('Tem certeza que deseja excluir este fornecedor?')) return;
+      
+      // Remover também as NFe relacionadas a esse fornecedor (índice)
+      nfeList = nfeList.filter(nfe => nfe.fornecedor !== indice);
 
       fornecedores.splice(indice, 1);
       atualizarTabelaFornecedores();
-      alert("Fornecedor excluído com sucesso!");
+      atualizarTabelaNfe();
     }
 
     // Atualizar tabela NFe
     function atualizarTabelaNfe() {
-      tabelaNfeBody.innerHTML = "";
+      const tbody = document.querySelector('#tabelaNfe tbody');
+      tbody.innerHTML = '';
       nfeList.forEach((nfe, i) => {
-        tabelaNfeBody.innerHTML += `
-          <tr>
-            <td>${nfe.data}</td>
-            <td>${nfe.fornecedor}</td>
-            <td>${nfe.status}</td>
-            <td>R$ ${parseFloat(nfe.valor).toFixed(2)}</td>
-            <td>
-              <button class="btn btn-sm btn-warning me-1" onclick="abrirModalEditarNfe(${i})" title="Editar">
-                <i class="bi bi-pencil-fill"></i>
-              </button>
-              <button class="btn btn-sm btn-danger" onclick="excluirNfe(${i})" title="Excluir">
-                <i class="bi bi-trash-fill"></i>
-              </button>
-            </td>
-          </tr>
+        const fornecedorNome = fornecedores[nfe.fornecedor]?.nome || '[Fornecedor excluído]';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${nfe.data}</td>
+          <td>${fornecedorNome}</td>
+          <td>${nfe.status}</td>
+          <td>${nfe.valor.toFixed(2)}</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-1" onclick="editarNfe(${i})"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-danger" onclick="excluirNfe(${i})"><i class="bi bi-trash"></i></button>
+          </td>
         `;
+        tbody.appendChild(tr);
       });
     }
 
     // Cadastrar NFe
     function cadastrarNfe(event) {
       event.preventDefault();
-      const data = document.getElementById("dataNfe").value;
-      const fornecedor = document.getElementById("fornecedorNfe").value;
-      const status = document.getElementById("statusNfe").value;
-      const valor = document.getElementById("valorNfe").value;
+      const data = document.getElementById('dataNfe').value;
+      const fornecedor = parseInt(document.getElementById('fornecedorNfe').value, 10);
+      const status = document.getElementById('statusNfe').value;
+      const valor = parseFloat(document.getElementById('valorNfe').value);
 
-      if (!data || !fornecedor || !status || valor === "") {
-        alert("Preencha todos os campos da NFe.");
+      if (isNaN(fornecedor)) {
+        alert('Selecione um fornecedor válido.');
         return;
       }
 
-      nfeList.push({ data, fornecedor, status, valor: parseFloat(valor).toFixed(2) });
+      nfeList.push({ data, fornecedor, status, valor });
       atualizarTabelaNfe();
+
       event.target.reset();
-      alert("NFe cadastrada com sucesso!");
     }
 
-    // Abrir modal para editar NFe
-    function abrirModalEditarNfe(indice) {
+    // Editar NFe
+    function editarNfe(indice) {
       const nfe = nfeList[indice];
-      document.getElementById("indiceNfeEditar").value = indice;
-      document.getElementById("dataNfeEditar").value = nfe.data;
-      document.getElementById("fornecedorNfeEditar").value = nfe.fornecedor;
-      document.getElementById("statusNfeEditar").value = nfe.status;
-      document.getElementById("valorNfeEditar").value = nfe.valor;
+      document.getElementById('indiceNfeEditar').value = indice;
+      document.getElementById('dataNfeEditar').value = nfe.data;
+      document.getElementById('fornecedorNfeEditar').value = nfe.fornecedor;
+      document.getElementById('statusNfeEditar').value = nfe.status;
+      document.getElementById('valorNfeEditar').value = nfe.valor.toFixed(2);
       editarNfeModal.show();
     }
 
-    // Salvar edição NFe
+    // Salvar edição da NFe
     function salvarEdicaoNfe(event) {
       event.preventDefault();
-      const indice = document.getElementById("indiceNfeEditar").value;
-      const data = document.getElementById("dataNfeEditar").value;
-      const fornecedor = document.getElementById("fornecedorNfeEditar").value;
-      const status = document.getElementById("statusNfeEditar").value;
-      const valor = document.getElementById("valorNfeEditar").value;
+      const indice = parseInt(document.getElementById('indiceNfeEditar').value, 10);
+      const data = document.getElementById('dataNfeEditar').value;
+      const fornecedor = parseInt(document.getElementById('fornecedorNfeEditar').value, 10);
+      const status = document.getElementById('statusNfeEditar').value;
+      const valor = parseFloat(document.getElementById('valorNfeEditar').value);
 
-      if (!data || !fornecedor || !status || valor === "") {
-        alert("Preencha todos os campos da NFe.");
+      if (isNaN(fornecedor)) {
+        alert('Selecione um fornecedor válido.');
         return;
       }
 
-      nfeList[indice] = { data, fornecedor, status, valor: parseFloat(valor).toFixed(2) };
+      nfeList[indice] = { data, fornecedor, status, valor };
       atualizarTabelaNfe();
       editarNfeModal.hide();
-      alert("NFe atualizada com sucesso!");
     }
 
     // Excluir NFe
     function excluirNfe(indice) {
-      if (!confirm("Deseja realmente excluir esta NFe?")) return;
+      if (!confirm('Tem certeza que deseja excluir esta NFe?')) return;
       nfeList.splice(indice, 1);
       atualizarTabelaNfe();
-      alert("NFe excluída com sucesso!");
     }
 
-    // Exportar para Excel
+    // Exportar relatório para Excel (gera um CSV simples)
     function exportarExcel() {
       if (nfeList.length === 0) {
-        alert("Não há dados para exportar.");
+        alert('Nenhum lançamento de NFe para exportar.');
         return;
       }
-      // Criar CSV com os dados da NFe
-      let csv = "Data,Fornecedor,Status,Valor (R$)\n";
+
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "Data,Fornecedor,Status,Valor (R$)\r\n";
+
       nfeList.forEach(nfe => {
-        csv += `"${nfe.data}","${nfe.fornecedor}","${nfe.status}","${nfe.valor}"\n`;
+        const fornecedorNome = fornecedores[nfe.fornecedor]?.nome || '[Fornecedor excluído]';
+        const row = [nfe.data, fornecedorNome, nfe.status, nfe.valor.toFixed(2)].join(",");
+        csvContent += row + "\r\n";
       });
 
-      // Criar link de download
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
+      const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
-      link.setAttribute("href", url);
+      link.setAttribute("href", encodedUri);
       link.setAttribute("download", "relatorio_nfe.csv");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
     }
 
-    // Inicialização: atualizar tabelas e selects
+    // Inicialização
     atualizarTabelaFornecedores();
     atualizarTabelaNfe();
   </script>
