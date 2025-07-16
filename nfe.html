@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sistema Fornecedores e NFe</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="container my-4">
+    <h1>Sistema de Fornecedores e Lançamento de NFe</h1>
+
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs" id="tabSistema" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="fornecedores-tab" data-bs-toggle="tab" data-bs-target="#fornecedores" type="button" role="tab" aria-controls="fornecedores" aria-selected="true">Fornecedores</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="nfe-tab" data-bs-toggle="tab" data-bs-target="#nfe" type="button" role="tab" aria-controls="nfe" aria-selected="false">Lançamento NFe</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="relatorio-tab" data-bs-toggle="tab" data-bs-target="#relatorio" type="button" role="tab" aria-controls="relatorio" aria-selected="false">Relatório Excel</button>
+      </li>
+    </ul>
+
+    <!-- Tab content -->
+    <div class="tab-content mt-3" id="tabSistemaContent">
+      <!-- Aba Fornecedores -->
+      <div class="tab-pane fade show active" id="fornecedores" role="tabpanel" aria-labelledby="fornecedores-tab">
+        <form id="formFornecedor" class="mb-4" onsubmit="cadastrarFornecedor(event)">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label for="nomeFornecedor" class="form-label">Nome do Fornecedor</label>
+              <input type="text" id="nomeFornecedor" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+              <label for="contaCusto" class="form-label">Conta Custo</label>
+              <input type="text" id="contaCusto" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+              <label for="grupoCusto" class="form-label">Grupo de Custo</label>
+              <input type="text" id="grupoCusto" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+              <label for="centroCusto" class="form-label">Centro de Custo</label>
+              <input type="text" id="centroCusto" class="form-control" required />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary mt-3">Cadastrar Fornecedor</button>
+        </form>
+
+        <table class="table table-bordered" id="tabelaFornecedores">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Conta Custo</th>
+              <th>Grupo de Custo</th>
+              <th>Centro de Custo</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- Aba Lançamento NFe -->
+      <div class="tab-pane fade" id="nfe" role="tabpanel" aria-labelledby="nfe-tab">
+        <form id="formNfe" onsubmit="cadastrarNfe(event)">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label for="dataNfe" class="form-label">Data da NFe</label>
+              <input type="date" id="dataNfe" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+              <label for="fornecedorNfe" class="form-label">Fornecedor</label>
+              <select id="fornecedorNfe" class="form-select" required>
+                <option value="">Selecione</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label for="statusNfe" class="form-label">Status</label>
+              <select id="statusNfe" class="form-select" required>
+                <option value="não lançado">Não Lançado</option>
+                <option value="lançado">Lançado</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label for="valorNfe" class="form-label">Valor (R$)</label>
+              <input type="number" step="0.01" min="0" id="valorNfe" class="form-control" required />
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button type="submit" class="btn btn-success w-100">Lançar NFe</button>
+            </div>
+          </div>
+        </form>
+
+        <hr />
+
+        <table class="table table-bordered" id="tabelaNfe">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Fornecedor</th>
+              <th>Status</th>
+              <th>Valor (R$)</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- Aba Relatório -->
+      <div class="tab-pane fade" id="relatorio" role="tabpanel" aria-labelledby="relatorio-tab">
+        <button class="btn btn-primary" onclick="exportarExcel()">Exportar Relatório NFe para Excel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal editar fornecedor -->
+  <div class="modal fade" id="editarFornecedorModal" tabindex="-1" aria-labelledby="editarFornecedorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="formEditarFornecedor" onsubmit="salvarEdicaoFornecedor(event)">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editarFornecedorModalLabel">Editar Fornecedor</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="indiceFornecedorEditar" />
+            <div class="mb-3">
+              <label for="nomeFornecedorEditar" class="form-label">Nome do Fornecedor</label>
+              <input type="text" id="nomeFornecedorEditar" class="form-control" required />
+            </div>
+            <div class="mb-3">
+              <label for="contaCustoEditar" class="form-label">Conta Custo</label>
+              <input type="text" id="contaCustoEditar" class="form-control" required />
+            </div>
+            <div class="mb-3">
+              <label for="grupoCustoEditar" class="form-label">Grupo de Custo</label>
+              <input type="text" id="grupoCustoEditar" class="form-control" required />
+            </div>
+            <div class="mb-3">
+              <label for="centroCustoEditar" class="form-label">Centro de Custo</label>
+              <input type="text" id="centroCustoEditar" class="form-control" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal editar NFe -->
+  <div class="modal fade" id="editarNfeModal" tabindex="-1" aria-labelledby="editarNfeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="formEditarNfe" onsubmit="salvarEdicaoNfe(event)">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editarNfeModalLabel">Editar NFe</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="indiceNfeEditar" />
+            <div class="mb-3">
+              <label for="dataNfeEditar" class="form-label">Data da NFe</label>
+              <input type="date" id="dataNfeEditar" class="form-control" required />
+            </div>
+            <div class="mb-3">
+              <label for="fornecedorNfeEditar" class="form-label">Fornecedor</label>
+              <select id="fornecedorNfeEditar" class="form-select" required>
+                <option value="">Selecione</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="statusNfeEditar" class="form-label">Status</label>
+              <select id="statusNfeEditar" class="form-select" required>
+                <option value="não lançado">Não Lançado</option>
+                <option value="lançado">Lançado</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="valorNfeEditar" class="form-label">Valor (R$)</label>
+              <input type="number" step="0.01" min="0" id="valorNfeEditar" class="form-control" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Dados locais simulando banco de dados
+    let fornecedores = [];
+    let nfeList = [];
+
+    // Referências ao DOM
+    const tabelaFornecedoresBody = document.querySelector("#tabelaFornecedores tbody");
+    const tabelaNfeBody = document.querySelector("#tabelaNfe tbody");
+    const fornecedorNfeSelect = document.getElementById("fornecedorNfe");
+    const fornecedorNfeEditarSelect = document.getElementById("fornecedorNfeEditar");
+
+    // Modal Bootstrap
+    const editarFornecedorModal = new bootstrap.Modal(document.getElementById('editarFornecedorModal'));
+    const editarNfeModal = new bootstrap.Modal(document.getElementById('editarNfeModal'));
+
+    // Função para atualizar a tabela fornecedores
+    function atualizarTabelaFornecedores() {
+      tabelaFornecedoresBody.innerHTML = "";
+      fornecedores.forEach((f, i) => {
+        tabelaFornecedoresBody.innerHTML += `
+          <tr>
+            <td>${f.nome}</td>
+            <td>${f.contaCusto}</td>
+            <td>${f.grupoCusto}</td>
+            <td>${f.centroCusto}</td>
+            <td>
+              <button class="btn btn-sm btn-warning me-1" onclick="abrirModalEditarFornecedor(${i})" title="Editar">
+                <i class="bi bi-pencil-fill"></i>
+              </button>
+              <button class="btn btn-sm btn-danger" onclick="excluirFornecedor(${i})" title="Excluir">
+                <i class="bi bi-trash-fill"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      atualizarSelectFornecedores();
+    }
+
+    // Função para atualizar o select de fornecedores no formulário NFe
+    function atualizarSelectFornecedores() {
+      const selects = [fornecedorNfeSelect, fornecedorNfeEditarSelect];
+      selects.forEach(select => {
+        const selecionado = select.value;
+        select.innerHTML = '<option value="">Selecione</option>';
+        fornecedores.forEach((f, i) => {
+          select.innerHTML += `<option value="${f.nome}">${f.nome}</option>`;
+        });
+        if (selecionado) select.value = selecionado;
+      });
+    }
+
+    // Cadastrar fornecedor
+    function cadastrarFornecedor(event) {
+      event.preventDefault();
+      const nome = document.getElementById("nomeFornecedor").value.trim();
+      const contaCusto = document.getElementById("contaCusto").value.trim();
+      const grupoCusto = document.getElementById("grupoCusto").value.trim();
+      const centroCusto = document.getElementById("centroCusto").value.trim();
+
+      if (!nome || !contaCusto || !grupoCusto || !centroCusto) {
+        alert("Preencha todos os campos do fornecedor.");
+        return;
+      }
+
+      fornecedores.push({ nome, contaCusto, grupoCusto, centroCusto });
+      atualizarTabelaFornecedores();
+      event.target.reset();
+      alert("Fornecedor cadastrado com sucesso!");
+    }
+
+    // Abrir modal para editar fornecedor
+    function abrirModalEditarFornecedor(indice) {
+      const f = fornecedores[indice];
+      document.getElementById("indiceFornecedorEditar").value = indice;
+      document.getElementById("nomeFornecedorEditar").value = f.nome;
+      document.getElementById("contaCustoEditar").value = f.contaCusto;
+      document.getElementById("grupoCustoEditar").value = f.grupoCusto;
+      document.getElementById("centroCustoEditar").value = f.centroCusto;
+      editarFornecedorModal.show();
+    }
+
+    // Salvar edição fornecedor
+    function salvarEdicaoFornecedor(event) {
+      event.preventDefault();
+      const indice = document.getElementById("indiceFornecedorEditar").value;
+      const nome = document.getElementById("nomeFornecedorEditar").value.trim();
+      const contaCusto = document.getElementById("contaCustoEditar").value.trim();
+      const grupoCusto = document.getElementById("grupoCustoEditar").value.trim();
+      const centroCusto = document.getElementById("centroCustoEditar").value.trim();
+
+      if (!nome || !contaCusto || !grupoCusto || !centroCusto) {
+        alert("Preencha todos os campos do fornecedor.");
+        return;
+      }
+
+      fornecedores[indice] = { nome, contaCusto, grupoCusto, centroCusto };
+      atualizarTabelaFornecedores();
+      editarFornecedorModal.hide();
+      alert("Fornecedor atualizado com sucesso!");
+    }
+
+    // Excluir fornecedor
+    function excluirFornecedor(indice) {
+      if (!confirm("Deseja realmente excluir este fornecedor?")) return;
+
+      // Verifica se existe NFe lançado para este fornecedor
+      const nomeFornecedor = fornecedores[indice].nome;
+      const temNfe = nfeList.some(nfe => nfe.fornecedor === nomeFornecedor);
+      if (temNfe) {
+        alert("Não é possível excluir fornecedor com NFe lançado.");
+        return;
+      }
+
+      fornecedores.splice(indice, 1);
+      atualizarTabelaFornecedores();
+      alert("Fornecedor excluído com sucesso!");
+    }
+
+    // Atualizar tabela NFe
+    function atualizarTabelaNfe() {
+      tabelaNfeBody.innerHTML = "";
+      nfeList.forEach((nfe, i) => {
+        tabelaNfeBody.innerHTML += `
+          <tr>
+            <td>${nfe.data}</td>
+            <td>${nfe.fornecedor}</td>
+            <td>${nfe.status}</td>
+            <td>R$ ${parseFloat(nfe.valor).toFixed(2)}</td>
+            <td>
+              <button class="btn btn-sm btn-warning me-1" onclick="abrirModalEditarNfe(${i})" title="Editar">
+                <i class="bi bi-pencil-fill"></i>
+              </button>
+              <button class="btn btn-sm btn-danger" onclick="excluirNfe(${i})" title="Excluir">
+                <i class="bi bi-trash-fill"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    // Cadastrar NFe
+    function cadastrarNfe(event) {
+      event.preventDefault();
+      const data = document.getElementById("dataNfe").value;
+      const fornecedor = document.getElementById("fornecedorNfe").value;
+      const status = document.getElementById("statusNfe").value;
+      const valor = document.getElementById("valorNfe").value;
+
+      if (!data || !fornecedor || !status || valor === "") {
+        alert("Preencha todos os campos da NFe.");
+        return;
+      }
+
+      nfeList.push({ data, fornecedor, status, valor: parseFloat(valor).toFixed(2) });
+      atualizarTabelaNfe();
+      event.target.reset();
+      alert("NFe cadastrada com sucesso!");
+    }
+
+    // Abrir modal para editar NFe
+    function abrirModalEditarNfe(indice) {
+      const nfe = nfeList[indice];
+      document.getElementById("indiceNfeEditar").value = indice;
+      document.getElementById("dataNfeEditar").value = nfe.data;
+      document.getElementById("fornecedorNfeEditar").value = nfe.fornecedor;
+      document.getElementById("statusNfeEditar").value = nfe.status;
+      document.getElementById("valorNfeEditar").value = nfe.valor;
+      editarNfeModal.show();
+    }
+
+    // Salvar edição NFe
+    function salvarEdicaoNfe(event) {
+      event.preventDefault();
+      const indice = document.getElementById("indiceNfeEditar").value;
+      const data = document.getElementById("dataNfeEditar").value;
+      const fornecedor = document.getElementById("fornecedorNfeEditar").value;
+      const status = document.getElementById("statusNfeEditar").value;
+      const valor = document.getElementById("valorNfeEditar").value;
+
+      if (!data || !fornecedor || !status || valor === "") {
+        alert("Preencha todos os campos da NFe.");
+        return;
+      }
+
+      nfeList[indice] = { data, fornecedor, status, valor: parseFloat(valor).toFixed(2) };
+      atualizarTabelaNfe();
+      editarNfeModal.hide();
+      alert("NFe atualizada com sucesso!");
+    }
+
+    // Excluir NFe
+    function excluirNfe(indice) {
+      if (!confirm("Deseja realmente excluir esta NFe?")) return;
+      nfeList.splice(indice, 1);
+      atualizarTabelaNfe();
+      alert("NFe excluída com sucesso!");
+    }
+
+    // Exportar para Excel
+    function exportarExcel() {
+      if (nfeList.length === 0) {
+        alert("Não há dados para exportar.");
+        return;
+      }
+      // Criar CSV com os dados da NFe
+      let csv = "Data,Fornecedor,Status,Valor (R$)\n";
+      nfeList.forEach(nfe => {
+        csv += `"${nfe.data}","${nfe.fornecedor}","${nfe.status}","${nfe.valor}"\n`;
+      });
+
+      // Criar link de download
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "relatorio_nfe.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    // Inicialização: atualizar tabelas e selects
+    atualizarTabelaFornecedores();
+    atualizarTabelaNfe();
+  </script>
+</body>
+</html>
